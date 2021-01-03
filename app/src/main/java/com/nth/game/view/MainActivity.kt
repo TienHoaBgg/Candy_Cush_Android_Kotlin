@@ -1,13 +1,12 @@
-package com.nth.game
+package com.nth.game.view
 
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
+import com.nth.game.FileManager
+import com.nth.game.R
 import com.nth.game.databinding.ActivityMainBinding
-import java.io.IOException
-import java.io.InputStream
-import java.lang.StringBuilder
 
 class MainActivity : AppCompatActivity() {
 
@@ -16,8 +15,8 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
-        val content = FileManager.getMap(this,"level1")
-        var index = 0
+
+
         binding.btnPlay.setOnClickListener {
 
             

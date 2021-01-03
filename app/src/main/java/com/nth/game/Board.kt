@@ -1,10 +1,12 @@
 package com.nth.game
 
+import android.app.Activity
 import android.content.res.Resources
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
-import java.util.*
+import com.nth.game.model.Candy
+import com.nth.game.model.FileMap
 
 /**
  * Created by NguyenTienHoa on 12/28/2020
@@ -12,49 +14,109 @@ import java.util.*
 
 class Board {
 
-
-//    var background: Bitmap
-
-    var row = 10
-    var col = 10
-    val space = 4
-    var weight : Float
-    var boardW : Float
-    var boardH : Float
-    val listCandy:MutableList<Candy> = mutableListOf()
+    var x = 0
+    var y = 0
+    var row = 0
+    var col = 0
+    var width : Int
+    var boardW : Int
+    var boardH : Int
     var candy:CandyBits
-    var screenW: Float
-    var screenH : Float
+    private var activity: Activity
+    lateinit var fileMap:FileMap
+    var listCandy:MutableList<Candy>
+    var candys:Array<Array<Candy?>>
 
 
-    constructor(screenW: Float, screenH: Float, res: Resources){
-        this.screenW = screenW
-        this.screenH = screenH
-        boardW = screenW - 200 + space*col
-        weight = boardW / col
-        boardH = weight * row + space*row
-        candy = CandyBits(weight,res)
+    constructor(activity: Activity, res: Resources){
+        this.activity = activity
 
-//        background = BitmapFactory.decodeResource(res, R.drawable.bg_play)
-//        background = Bitmap.createScaledBitmap(background, screenX.toInt(), screenY.toInt(), false)
-    }
+        val temp = FileManager.readMap(this.activity, "level1")
+        if (temp != null){
+            fileMap = temp
+        }else{
+            this.activity.finish()
+        }
+        listCandy = mutableListOf()
+        this.row = fileMap.tileMap.size
+        this.col = fileMap.tileMap[0].size
 
-    fun draw(canvas: Canvas, paint: Paint){
-        val x = screenW / 2 - boardW/2
-        val y = screenH / 2 - boardH/2
+        boardW = Constant.screenW - Constant.spaceBoardWidth + Constant.spaceBoard*col
+        width = boardW / col
+        boardH = width * row + Constant.spaceBoard*row
+        candy = CandyBits(width, res)
 
-        paint.color = Color.argb(111, 20, 180, 255)
+         x = Constant.screenW / 2 - boardW/2
+         y = Constant.screenH / 2 - boardH/2
+
+
+        candys = Array(col) { arrayOfNulls(row) }
+
         for (i in 0 until col) {
             for (j in 0 until row) {
-                val tempX = x + i * weight + space
-                val tempY = y + j * weight + space
-                canvas.drawRect(tempX, tempY, x + weight + i * weight, y + weight + j * weight, paint)
-                val index = Random().nextInt(candy.getCandy().size)
-                paint.color = Color.BLUE
-                canvas.drawBitmap(candy.getCandy()[index],tempX,tempY,paint)
-                paint.color = Color.argb(111, 20, 180, 255)
+                val tempX = x + i * width + Constant.spaceBoard
+                val tempY = y + j * width + Constant.spaceBoard
+                val typeCandy = fileMap.tileMap[j][i]
+                if (typeCandy != 0){
+                    candys[i][j] = Candy(
+                        (tempX + Constant.spaceCandy / 2).toFloat(),
+                        (tempY + Constant.spaceCandy / 2).toFloat(),
+                        width - Constant.spaceCandy,
+                        candy.getCandy(),
+                        false,
+                        false
+                    )
+                    listCandy.add(
+                        Candy(
+                            (tempX + Constant.spaceCandy / 2).toFloat(),
+                            (tempY + Constant.spaceCandy / 2).toFloat(),
+                            width - Constant.spaceCandy,
+                            candy.getCandy(),
+                            false,
+                            false
+                        )
+                    )
+                }
             }
         }
     }
 
+    fun draw(canvas: Canvas, paint: Paint){
+        val tempColor = paint.color
+        paint.color = Constant.colorBgBoard
+        canvas.drawRect(0f, 0f, Constant.screenW.toFloat(), 150f, paint)
+        canvas.drawRect(
+            (Constant.screenW / 4).toFloat(),
+            (Constant.screenH - 200).toFloat(),
+            Constant.screenW.toFloat(),
+            Constant.screenH.toFloat(),
+            paint
+        )
+
+        for (i in 0 until col) {
+            for (j in 0 until row) {
+                val tempX = x + i * width + Constant.spaceBoard
+                val tempY = y + j * width + Constant.spaceBoard
+                canvas.drawRect(
+                    tempX.toFloat(),
+                    tempY.toFloat(),
+                    (x + width + i * width).toFloat(),
+                    (y + width + j * width).toFloat(),
+                    paint
+                )
+                val typeCandy = fileMap.tileMap[j][i]
+                if (typeCandy == 0){
+                    paint.color = Color.BLUE
+                    canvas.drawBitmap(
+                        candy.getRocks(),
+                        (tempX + Constant.spaceCandy / 2).toFloat(),
+                        (tempY + Constant.spaceCandy / 2).toFloat(),
+                        paint
+                    )
+                    paint.color = Constant.colorBgBoard
+                }
+            }
+        }
+        paint.color = tempColor
+    }
 }

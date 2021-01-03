@@ -4,6 +4,7 @@ import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Rect
+import com.nth.game.model.CandyBit
 import java.util.*
 
 
@@ -13,53 +14,59 @@ import java.util.*
 
 class CandyBits {
 
-    var speed = 500
-    var wasShot = true
     var x = 0
     var y = 0
-    var weight:Int
-    var height:Int = 0
-    var birdCounter:Int = 1
+    var width:Int = 0
+
     var candy1: Bitmap? = null
     var candy2: Bitmap? = null
     var candy3: Bitmap? = null
     var candy4: Bitmap? = null
     var candy5: Bitmap? = null
     var candy6: Bitmap? = null
+    var rock:Bitmap? = null
 
-    val list:MutableList<Bitmap>
-    constructor(w:Float,res: Resources){
+    val list:MutableList<CandyBit>
+
+    constructor(w:Int,res: Resources){
         candy1 = BitmapFactory.decodeResource(res, R.drawable.c_blue)
         candy2 = BitmapFactory.decodeResource(res, R.drawable.c_green)
         candy3 = BitmapFactory.decodeResource(res, R.drawable.c_orange)
         candy4 = BitmapFactory.decodeResource(res, R.drawable.c_purple)
         candy5 = BitmapFactory.decodeResource(res, R.drawable.c_red)
         candy6 = BitmapFactory.decodeResource(res, R.drawable.c_yellow)
+        rock = BitmapFactory.decodeResource(res, R.drawable.rock)
 
-        this.weight = w.toInt() - 10
+        this.width = w - Constant.spaceCandy
 
-        candy1 = Bitmap.createScaledBitmap(candy1!!, weight, weight, false)
-        candy2 = Bitmap.createScaledBitmap(candy2!!, weight, weight, false)
-        candy3 = Bitmap.createScaledBitmap(candy3!!, weight, weight, false)
-        candy4 = Bitmap.createScaledBitmap(candy4!!, weight, weight, false)
-        candy5 = Bitmap.createScaledBitmap(candy5!!, weight, weight, false)
-        candy6 = Bitmap.createScaledBitmap(candy6!!, weight, weight, false)
+        candy1 = Bitmap.createScaledBitmap(candy1!!, width, width, false)
+        candy2 = Bitmap.createScaledBitmap(candy2!!, width, width, false)
+        candy3 = Bitmap.createScaledBitmap(candy3!!, width, width, false)
+        candy4 = Bitmap.createScaledBitmap(candy4!!, width, width, false)
+        candy5 = Bitmap.createScaledBitmap(candy5!!, width, width, false)
+        candy6 = Bitmap.createScaledBitmap(candy6!!, width, width, false)
+        rock = Bitmap.createScaledBitmap(rock!!, width, width, false)
+
         list = mutableListOf()
-        list.add(candy1!!)
-        list.add(candy2!!)
-        list.add(candy3!!)
-        list.add(candy4!!)
-        list.add(candy5!!)
-        list.add(candy6!!)
+        list.add(CandyBit(1,candy1!!))
+        list.add(CandyBit(2,candy2!!))
+        list.add(CandyBit(3,candy3!!))
+        list.add(CandyBit(4,candy4!!))
+        list.add(CandyBit(5,candy5!!))
+        list.add(CandyBit(6,candy6!!))
     }
 
-    fun getCandy(): MutableList<Bitmap> {
-//       val index = Random().nextInt(list.size)
-        return list
+    fun getCandy(): CandyBit {
+       val index = Random().nextInt(list.size)
+        return list[index]
+    }
+
+    fun getRocks(): Bitmap {
+        return rock!!
     }
 
     fun getCollisionShape(): Rect {
-        return Rect(x, y, x + weight, y + height)
+        return Rect(x, y, x + width, y + width)
     }
 
 }
