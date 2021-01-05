@@ -25,7 +25,7 @@ class Board {
     private var activity: Activity
     lateinit var fileMap:FileMap
     var listCandy:MutableList<Candy>
-    var candys:Array<Array<Candy?>>
+//    var candys:Array<Array<Candy?>>
 
 
     constructor(activity: Activity, res: Resources){
@@ -50,7 +50,7 @@ class Board {
          y = Constant.screenH / 2 - boardH/2
 
 
-        candys = Array(col) { arrayOfNulls(row) }
+//        candys = Array(col) { arrayOfNulls(row) }
 
         for (i in 0 until col) {
             for (j in 0 until row) {
@@ -58,14 +58,6 @@ class Board {
                 val tempY = y + j * width + Constant.spaceBoard
                 val typeCandy = fileMap.tileMap[j][i]
                 if (typeCandy != 0){
-                    candys[i][j] = Candy(
-                        (tempX + Constant.spaceCandy / 2).toFloat(),
-                        (tempY + Constant.spaceCandy / 2).toFloat(),
-                        width - Constant.spaceCandy,
-                        candy.getCandy(),
-                        false,
-                        false
-                    )
                     listCandy.add(
                         Candy(
                             (tempX + Constant.spaceCandy / 2).toFloat(),
@@ -73,7 +65,7 @@ class Board {
                             width - Constant.spaceCandy,
                             candy.getCandy(),
                             false,
-                            false
+                            true
                         )
                     )
                 }

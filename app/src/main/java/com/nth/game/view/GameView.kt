@@ -29,19 +29,31 @@ class GameView : SurfaceView, Runnable {
     private var board: Board
     private var candyBits: CandyBits
     private var listCandy: MutableList<Candy>
-    private var candyArr: Array<Array<Candy?>>
+    private var listCol :MutableList<Int>
+
     var index = 0
 
     constructor(activity: PlayActivity, screenW: Float, screenH: Float) : super(activity) {
         this.activity = activity
         background = Background(screenW, screenH, resources)
         paint = Paint()
-
+        listCol = arrayListOf()
         board = Board(activity, resources)
         listCandy = board.listCandy
-        candyArr = board.candys
+
         candyBits = CandyBits(board.width, resources)
         index = (listCandy.size - 1)
+        listCol.add(0)
+        for (i in 1..listCandy.size - 2){
+            if (listCandy[0].y == listCandy[i].y){
+                listCol.add(i)
+            }
+            if (listCol.size == board.col){
+                break
+            }
+        }
+
+
     }
 
     override fun run() {
@@ -52,12 +64,14 @@ class GameView : SurfaceView, Runnable {
         }
     }
 
-
+    var check = true
     private fun update() {
 
         checkMatchCol()
         checkMatchRow()
-        getScore()
+//        getScore()
+        dropDownCandy()
+
 
     }
 
@@ -70,24 +84,49 @@ class GameView : SurfaceView, Runnable {
             }
             candy.isMatch = false
         }
-       Log.i("Test","Score: ${60*countScore}")
+//       Log.i("Test","Score: ${60*countScore}")
     }
 
-    private fun swapCandy(){
-        var rowArr: Array<Array<Candy?>> = Array(board.row) { arrayOfNulls(listCandy.size) }
-        var tempRow = 0
-        var tempIdCandy = 0
+    private fun dropDownCandy(){
+
+        for (j in 0 until listCol.size - 1){
+            for (k in listCol[j] until listCol[j+1] - 1){
+                if (listCandy[listCol[j]].isMatch){
+                    listCandy[listCol[j]].candy = candyBits.getCandy()
+                    listCandy[listCol[j]].isMatch = false
+                }
+                if (listCandy[k+1].isMatch){
+                       var temp = listCandy[k].candy
+                       listCandy[k].candy = listCandy[k + 1].candy
+                        listCandy[k].isMatch = true
+                       listCandy[k+1].candy = temp
+                        listCandy[k+1].isMatch = false
+                }
+            }
+        }
+
+        for (k in listCol[listCol.size -1] until listCandy.size - 1){
+            if (listCandy[listCol[listCol.size -1]].isMatch){
+                listCandy[listCol[listCol.size -1]].candy = candyBits.getCandy()
+                listCandy[listCol[listCol.size -1]].isMatch = false
+            }
+            if (listCandy[k+1].isMatch){
+                var temp = listCandy[k].candy
+                listCandy[k].candy = listCandy[k + 1].candy
+                listCandy[k].isMatch = true
+                listCandy[k+1].candy = temp
+                listCandy[k+1].isMatch = false
+            }
+        }
 
 
     }
-
-
 
     private fun checkMatchRow() {
         var listRow: ArrayList<Int> = arrayListOf()
         for (i in listCandy.indices) {
             listRow.add(i)
-            for (j in i + 1 until listCandy.size -1) {
+            for (j in i + 1 until listCandy.size) {
                 if (listCandy[i].y == listCandy[j].y) {
                     listRow.add(j)
                 }
@@ -119,7 +158,7 @@ class GameView : SurfaceView, Runnable {
         var listCol: ArrayList<Int> = arrayListOf()
         for (i in listCandy.indices) {
             listCol.add(i)
-            for (j in i + 1 until listCandy.size -1) {
+            for (j in i + 1 until listCandy.size) {
                 if (listCandy[i].x == listCandy[j].x) {
                     listCol.add(j)
                 }
@@ -148,24 +187,8 @@ class GameView : SurfaceView, Runnable {
     }
 
 
-
-    private var rowSelect = 0
-    private var colSelect = 0
     private var candySelectId = 0
     private fun touchCandy(point: Point) {
-//        for (i in 0..board.col) {
-//            for (j in 0..board.row) {
-//                val candy = candyArr[i][j]!!
-//                if (point.x >= candy.x && point.x <= candy.x + candy.width && point.y >= candy.y && point.y <= candy.y + candy.width) {
-//                    candy.isSelect = !candy.isSelect
-//                    rowSelect = j
-//                    colSelect = i
-//                } else {
-//                    candy.isSelect = false
-//                }
-//            }
-//        }
-
         for (i in listCandy.indices) {
             val candy = listCandy[i]
             if (point.x >= candy.x && point.x <= candy.x + candy.width && point.y >= candy.y && point.y <= candy.y + candy.width) {
@@ -179,16 +202,6 @@ class GameView : SurfaceView, Runnable {
     }
 
     private fun moveCandy(point: Point) {
-//        for (i in 0..board.col) {
-//            for (j in 0..board.row) {
-//                if (point.x >= candyArr[i][j]!!.x && point.x <= candyArr[i][j]!!.x + candyArr[i][j]!!.width && point.y >= candyArr[i][j]!!.y && point.y <= candyArr[i][j]!!.y + candyArr[i][j]!!.width) {
-//                    val temp = candyArr[i][j]!!.candy
-//                    candyArr[i][j]!!.candy = candyArr[colSelect][rowSelect]!!.candy
-//                    candyArr[colSelect][rowSelect]!!.candy = temp
-//                    candyArr[colSelect][rowSelect]!!.isSelect = false
-//                }
-//            }
-//        }
 
         for (i in listCandy.indices) {
             if (point.x >= listCandy[i].x && point.x <= listCandy[i].x + listCandy[i].width && point.y >= listCandy[i].y && point.y <= listCandy[i].y + listCandy[i].width) {
@@ -270,7 +283,7 @@ class GameView : SurfaceView, Runnable {
 
     private fun sleep() {
         try {
-            Thread.sleep(111)
+            Thread.sleep(80)
         } catch (e: InterruptedException) {
             e.printStackTrace()
         }
