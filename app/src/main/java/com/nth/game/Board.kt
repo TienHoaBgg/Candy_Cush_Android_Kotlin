@@ -89,23 +89,25 @@ class Board {
             for (j in 0 until row) {
                 val tempX = x + i * width + Constant.spaceBoard
                 val tempY = y + j * width + Constant.spaceBoard
-                canvas.drawRect(
-                    tempX.toFloat(),
-                    tempY.toFloat(),
-                    (x + width + i * width).toFloat(),
-                    (y + width + j * width).toFloat(),
-                    paint
-                )
                 val typeCandy = fileMap.tileMap[j][i]
-                if (typeCandy == 0){
-                    paint.color = Color.BLUE
-                    canvas.drawBitmap(
-                        candy.getRocks(),
-                        (tempX + Constant.spaceCandy / 2).toFloat(),
-                        (tempY + Constant.spaceCandy / 2).toFloat(),
-                        paint
+                if (typeCandy != -1) {
+                    canvas.drawRect(
+                            tempX.toFloat(),
+                            tempY.toFloat(),
+                            (x + width + i * width).toFloat(),
+                            (y + width + j * width).toFloat(),
+                            paint
                     )
-                    paint.color = Constant.colorBgBoard
+                    if (typeCandy == 0) {
+                        paint.color = Color.BLUE
+                        canvas.drawBitmap(
+                                candy.getRocks(),
+                                (tempX + Constant.spaceCandy / 2).toFloat(),
+                                (tempY + Constant.spaceCandy / 2).toFloat(),
+                                paint
+                        )
+                        paint.color = Constant.colorBgBoard
+                    }
                 }
             }
         }

@@ -21,5 +21,7 @@ class Constant {
         const val spaceBoardWidth = 200
         val colorBgBoard = Color.argb(111, 20, 180, 255)
 
+        const val score = 10
+
     }
 }
