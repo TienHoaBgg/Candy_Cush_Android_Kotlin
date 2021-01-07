@@ -4,15 +4,13 @@ import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Point
-import android.util.Log
 import android.view.MotionEvent
 import android.view.SurfaceView
-import com.nth.game.Background
-import com.nth.game.Board
-import com.nth.game.CandyBits
+import com.nth.game.model.Background
+import com.nth.game.model.Board
+import com.nth.game.model.CandyBitmap
 import com.nth.game.Constant
 import com.nth.game.model.Candy
-import com.nth.game.model.CandyBit
 
 
 /**
@@ -29,10 +27,11 @@ class GameView : SurfaceView, Runnable {
     private var background: Background
     private var paint: Paint
     private var board: Board
-    private var candyBits: CandyBits
+    private var candyBitmap: CandyBitmap
     private var listCandy: MutableList<Candy>
     private var listCol :MutableList<Int>
     private var score = 0
+    private var moveCount = 0
     var index = 0
 
     constructor(activity: PlayActivity, screenW: Float, screenH: Float) : super(activity) {
@@ -40,10 +39,11 @@ class GameView : SurfaceView, Runnable {
         background = Background(screenW, screenH, resources)
         paint = Paint()
         listCol = arrayListOf()
-        board = Board(activity, resources)
+        board = Board(activity,"level1", resources)
+        moveCount = board.fileMap.moveLimit
         listCandy = board.listCandy
 
-        candyBits = CandyBits(board.width, resources)
+        candyBitmap = CandyBitmap(board.width, resources)
         index = (listCandy.size - 1)
         listCol.add(0)
         for (i in 1..listCandy.size - 2){
@@ -54,33 +54,38 @@ class GameView : SurfaceView, Runnable {
                 break
             }
         }
-
-
     }
 
     override fun run() {
         while (isPlaying) {
             draw()
-            update()
+            checkMatch()
+            dropDownCandy()
+            checkEndGame()
             sleep()
         }
     }
 
-
-    private fun update() {
-
-        checkMatch()
-//        getScore()
-        dropDownCandy()
-
+    private fun checkEndGame(){
+        if (moveCount <= 0){
+            var isRun = false
+            for (candy in listCandy){
+                if (candy.isMatch){
+                    isRun = true
+                    break
+                }
+            }
+            if (!isRun && checkMatch() == 0){
+                isGameOver = true
+            }
+        }
     }
 
     private fun dropDownCandy(){
-
         for (j in 0 until listCol.size - 1){
             for (k in listCol[j] until listCol[j+1] - 1){
                 if (listCandy[listCol[j]].isMatch){
-                    listCandy[listCol[j]].candy = candyBits.getCandy()
+                    listCandy[listCol[j]].candy = candyBitmap.getCandy()
                     listCandy[listCol[j]].isMatch = false
                 }
                 if (listCandy[k+1].isMatch){
@@ -93,9 +98,10 @@ class GameView : SurfaceView, Runnable {
             }
         }
 
+        // hieu ung cho cot cuoi cung
         for (k in listCol[listCol.size -1] until listCandy.size - 1){
             if (listCandy[listCol[listCol.size -1]].isMatch){
-                listCandy[listCol[listCol.size -1]].candy = candyBits.getCandy()
+                listCandy[listCol[listCol.size -1]].candy = candyBitmap.getCandy()
                 listCandy[listCol[listCol.size -1]].isMatch = false
             }
             if (listCandy[k+1].isMatch){
@@ -106,8 +112,6 @@ class GameView : SurfaceView, Runnable {
                 listCandy[k+1].isMatch = false
             }
         }
-
-
     }
 
     private fun checkMatch() : Int {
@@ -209,18 +213,27 @@ class GameView : SurfaceView, Runnable {
                 candy.isSelect = false
             }
         }
-
     }
 
     private fun moveCandy(point: Point) {
         for (i in listCandy.indices) {
             if (point.x >= listCandy[i].x && point.x <= listCandy[i].x + listCandy[i].width && point.y >= listCandy[i].y && point.y <= listCandy[i].y + listCandy[i].width) {
-                val temp = listCandy[i].candy
-                listCandy[i].candy = listCandy[candySelectId].candy
-                listCandy[candySelectId].candy = temp
-                listCandy[candySelectId].isSelect = false
-
-
+                Thread {
+                    var temp = listCandy[i].candy
+                    listCandy[i].candy = listCandy[candySelectId].candy
+                    listCandy[candySelectId].candy = temp
+                    // Kiem tra sau khi di chuyen candy co match khong
+                    // Neu khong thi di chuyen lai vi tri cu
+                    if (checkMatch() <= 0){
+                        Thread.sleep(220)
+                        temp = listCandy[i].candy
+                        listCandy[i].candy = listCandy[candySelectId].candy
+                        listCandy[candySelectId].candy = temp
+                    }else{
+                        moveCount--
+                    }
+                    listCandy[candySelectId].isSelect = false
+                }.start()
             }
         }
     }
@@ -234,14 +247,16 @@ class GameView : SurfaceView, Runnable {
             paint.color = Color.BLUE
 
             for (candy in listCandy) {
+                // Ve tat ca cac candy ma chua match
                 if (!candy.isMatch) {
                     if (candy.isSelect) {
+                        // Tao hieu ung nhap nhay candy khi duoc chon
                         if (candyS) {
                             canvas.drawBitmap(
                                     Bitmap.createScaledBitmap(
                                             candy.candy.bitmap,
-                                            candyBits.width - 10,
-                                            candyBits.width - 10,
+                                            candyBitmap.width - 10,
+                                            candyBitmap.width - 10,
                                             false
                                     ), candy.x, candy.y, paint
                             )
@@ -257,6 +272,17 @@ class GameView : SurfaceView, Runnable {
 
             paint.textSize = 100f
             canvas.drawText("$score",((Constant.screenW * 3 / 5) ).toFloat(),(Constant.screenH - 69).toFloat(),paint )
+            paint.color = Color.RED
+            canvas.drawText("$moveCount",((Constant.screenW  / 2) ).toFloat(),(Constant.screenH - 69).toFloat(),paint )
+
+            if (isGameOver){
+                isPlaying = false
+                paint.textSize = 160f
+                paint.color = Color.WHITE
+                canvas.drawText("Game Over",((Constant.screenW  / 4)).toFloat(),(Constant.screenH/2).toFloat(),paint )
+
+            }
+
 
             holder.unlockCanvasAndPost(canvas)
         }
@@ -271,16 +297,22 @@ class GameView : SurfaceView, Runnable {
             when (event.action) {
                 MotionEvent.ACTION_MOVE -> {
                     if (isTouch) {
+                        // Candy sang phai
                         if (event.x > touchTempX + listCandy[0].width && event.y > touchTempY - listCandy[0].width / 2 && event.y < touchTempY + listCandy[0].width / 2) {
                             isTouch = false
                             moveCandy(Point(event.x.toInt(), event.y.toInt()))
-                        } else if (event.x < touchTempX - listCandy[0].width && event.y > touchTempY - listCandy[0].width / 2 && event.y < touchTempY + listCandy[0].width / 2) {
+
+                        }// Candy sang trai
+                        else if (event.x < touchTempX - listCandy[0].width && event.y > touchTempY - listCandy[0].width / 2 && event.y < touchTempY + listCandy[0].width / 2) {
                             isTouch = false
                             moveCandy(Point(event.x.toInt(), event.y.toInt()))
-                        } else if (event.y > touchTempY + listCandy[0].width && event.x > touchTempX - listCandy[0].width / 2 && event.x < touchTempX + listCandy[0].width / 2) {
+                        }
+                        // Candy di xuong
+                        else if (event.y > touchTempY + listCandy[0].width && event.x > touchTempX - listCandy[0].width / 2 && event.x < touchTempX + listCandy[0].width / 2) {
                             isTouch = false
                             moveCandy(Point(event.x.toInt(), event.y.toInt()))
-                        } else if (event.y < touchTempY - listCandy[0].width && event.x > touchTempX - listCandy[0].width / 2 && event.x < touchTempX + listCandy[0].width / 2) {
+                        } // Candy di len
+                        else if (event.y < touchTempY - listCandy[0].width && event.x > touchTempX - listCandy[0].width / 2 && event.x < touchTempX + listCandy[0].width / 2) {
                             isTouch = false
                             moveCandy(Point(event.x.toInt(), event.y.toInt()))
                         }
@@ -299,7 +331,7 @@ class GameView : SurfaceView, Runnable {
 
     private fun sleep() {
         try {
-            Thread.sleep(100)
+            Thread.sleep(122)
         } catch (e: InterruptedException) {
             e.printStackTrace()
         }

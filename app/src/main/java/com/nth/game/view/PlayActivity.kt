@@ -1,12 +1,9 @@
 package com.nth.game.view
 
-import android.content.res.Resources
 import android.graphics.Point
 import android.os.Bundle
-import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import com.nth.game.Constant
-import com.nth.game.FileManager
 
 /**
  * Created by NguyenTienHoa on 12/23/2020

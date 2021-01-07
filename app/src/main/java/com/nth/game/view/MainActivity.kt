@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
-import com.nth.game.FileManager
 import com.nth.game.R
 import com.nth.game.databinding.ActivityMainBinding
 

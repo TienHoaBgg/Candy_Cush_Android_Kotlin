@@ -11,11 +11,9 @@ data class FileMap(var moveLimit:Int, var scoreTargets:IntArray, var tileMap:Arr
         if (javaClass != other?.javaClass) return false
 
         other as FileMap
-
         if (moveLimit != other.moveLimit) return false
         if (!scoreTargets.contentEquals(other.scoreTargets)) return false
         if (!tileMap.contentDeepEquals(other.tileMap)) return false
-
         return true
     }
 

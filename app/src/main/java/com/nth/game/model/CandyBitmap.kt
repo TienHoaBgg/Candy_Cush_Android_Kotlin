@@ -1,10 +1,11 @@
-package com.nth.game
+package com.nth.game.model
 
 import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Rect
-import com.nth.game.model.CandyBit
+import com.nth.game.Constant
+import com.nth.game.R
 import java.util.*
 
 
@@ -12,12 +13,9 @@ import java.util.*
  * Created by NguyenTienHoa on 12/30/2020
  */
 
-class CandyBits {
+class CandyBitmap {
 
-    var x = 0
-    var y = 0
     var width:Int = 0
-
     var candy1: Bitmap? = null
     var candy2: Bitmap? = null
     var candy3: Bitmap? = null
@@ -26,7 +24,7 @@ class CandyBits {
     var candy6: Bitmap? = null
     var rock:Bitmap? = null
 
-    val list:MutableList<CandyBit>
+    private val list:MutableList<CandyBit>
 
     constructor(w:Int,res: Resources){
         candy1 = BitmapFactory.decodeResource(res, R.drawable.c_blue)
@@ -63,10 +61,6 @@ class CandyBits {
 
     fun getRocks(): Bitmap {
         return rock!!
-    }
-
-    fun getCollisionShape(): Rect {
-        return Rect(x, y, x + width, y + width)
     }
 
 }

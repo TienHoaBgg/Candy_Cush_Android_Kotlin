@@ -10,7 +10,7 @@ import java.io.InputStream
  * Created by NguyenTienHoa on 12/23/2020
  */
 
-class FileManager {
+class Utils {
 
     companion object{
         @JvmStatic
@@ -26,7 +26,6 @@ class FileManager {
             }
             return null
         }
-
     }
 
 }

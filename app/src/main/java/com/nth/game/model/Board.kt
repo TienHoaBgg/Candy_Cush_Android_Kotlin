@@ -1,12 +1,12 @@
-package com.nth.game
+package com.nth.game.model
 
 import android.app.Activity
 import android.content.res.Resources
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
-import com.nth.game.model.Candy
-import com.nth.game.model.FileMap
+import com.nth.game.Constant
+import com.nth.game.Utils
 
 /**
  * Created by NguyenTienHoa on 12/28/2020
@@ -21,17 +21,14 @@ class Board {
     var width : Int
     var boardW : Int
     var boardH : Int
-    var candy:CandyBits
+    var candy: CandyBitmap
     private var activity: Activity
     lateinit var fileMap:FileMap
     var listCandy:MutableList<Candy>
-//    var candys:Array<Array<Candy?>>
 
-
-    constructor(activity: Activity, res: Resources){
+    constructor(activity: Activity,levelName : String, res: Resources){
         this.activity = activity
-
-        val temp = FileManager.readMap(this.activity, "level1")
+        val temp = Utils.readMap(this.activity, levelName)
         if (temp != null){
             fileMap = temp
         }else{
@@ -41,16 +38,13 @@ class Board {
         this.row = fileMap.tileMap.size
         this.col = fileMap.tileMap[0].size
 
-        boardW = Constant.screenW - Constant.spaceBoardWidth + Constant.spaceBoard*col
+        boardW = Constant.screenW - Constant.spaceBoardWidth + Constant.spaceBoard *col
         width = boardW / col
-        boardH = width * row + Constant.spaceBoard*row
-        candy = CandyBits(width, res)
+        boardH = width * row + Constant.spaceBoard *row
+        candy = CandyBitmap(width, res)
 
          x = Constant.screenW / 2 - boardW/2
          y = Constant.screenH / 2 - boardH/2
-
-
-//        candys = Array(col) { arrayOfNulls(row) }
 
         for (i in 0 until col) {
             for (j in 0 until row) {
@@ -64,8 +58,8 @@ class Board {
                             (tempY + Constant.spaceCandy / 2).toFloat(),
                             width - Constant.spaceCandy,
                             candy.getCandy(),
-                            false,
-                            true
+                                isSelect = false,
+                                isMatch = true
                         )
                     )
                 }
@@ -79,7 +73,7 @@ class Board {
         canvas.drawRect(0f, 0f, Constant.screenW.toFloat(), 150f, paint)
         canvas.drawRect(
             (Constant.screenW / 4).toFloat(),
-            (Constant.screenH - 200).toFloat(),
+            (Constant.screenH - Constant.spaceBoardWidth).toFloat(),
             Constant.screenW.toFloat(),
             Constant.screenH.toFloat(),
             paint
