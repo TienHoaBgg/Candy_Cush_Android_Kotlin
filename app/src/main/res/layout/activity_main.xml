@@ -1,35 +1,60 @@
 <?xml version="1.0" encoding="utf-8"?>
-<layout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools">
+<layout xmlns:android="http://schemas.android.com/apk/res/android">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
         android:gravity="center"
-
+        android:background="@drawable/background"
         >
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/txtContent"
-            android:textSize="15sp"
-            android:textColor="@color/black"
-            android:textStyle="bold"
-            android:layout_gravity="center"
-            />
 
         <Button
             android:id="@+id/btnPlay"
             android:background ="@drawable/bg_button"
             android:layout_width="200dp"
-            android:layout_height="68dp"
+            android:layout_height="62dp"
             android:padding="10dp"
-            android:text="@string/play"
+            android:text="@string/sPlay"
             android:textStyle="bold"
-            android:textSize="20sp"
-            android:layout_marginTop="180dp"
+            android:textSize="22sp"
+            android:layout_marginTop="320dp"
+            />
+
+        <Button
+            android:id="@+id/btnHighScore"
+            android:background ="@drawable/bg_button"
+            android:layout_width="200dp"
+            android:layout_height="62dp"
+            android:padding="10dp"
+            android:text="@string/sHighScore"
+            android:textStyle="bold"
+            android:textSize="22sp"
+            android:layout_marginTop="10dp"
+            />
+
+        <Button
+            android:id="@+id/btnSetting"
+            android:background ="@drawable/bg_button"
+            android:layout_width="200dp"
+            android:layout_height="62dp"
+            android:padding="10dp"
+            android:text="@string/sSetting"
+            android:textStyle="bold"
+            android:textSize="22sp"
+            android:layout_marginTop="10dp"
+            />
+
+        <Button
+            android:id="@+id/btnExit"
+            android:background ="@drawable/bg_button"
+            android:layout_width="200dp"
+            android:layout_height="62dp"
+            android:padding="10dp"
+            android:text="@string/sExit"
+            android:textStyle="bold"
+            android:textSize="22sp"
+            android:layout_marginTop="10dp"
             />
 
 

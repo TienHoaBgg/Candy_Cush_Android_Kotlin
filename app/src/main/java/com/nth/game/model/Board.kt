@@ -7,6 +7,9 @@ import android.graphics.Color
 import android.graphics.Paint
 import com.nth.game.Constant
 import com.nth.game.Utils
+import com.nth.game.bitmap.CandyBitmap
+import com.nth.game.bitmap.Footer
+import com.nth.game.bitmap.Header
 
 /**
  * Created by NguyenTienHoa on 12/28/2020
@@ -25,7 +28,8 @@ class Board {
     private var activity: Activity
     lateinit var fileMap:FileMap
     var listCandy:MutableList<Candy>
-
+    var header:Header
+    var footer:Footer
     constructor(activity: Activity,levelName : String, res: Resources){
         this.activity = activity
         val temp = Utils.readMap(this.activity, levelName)
@@ -46,12 +50,15 @@ class Board {
          x = Constant.screenW / 2 - boardW/2
          y = Constant.screenH / 2 - boardH/2
 
+        this.header = Header(fileMap.scoreTargets,res)
+        this.footer = Footer(res)
+
         for (i in 0 until col) {
             for (j in 0 until row) {
                 val tempX = x + i * width + Constant.spaceBoard
                 val tempY = y + j * width + Constant.spaceBoard
                 val typeCandy = fileMap.tileMap[j][i]
-                if (typeCandy != 0){
+                if (typeCandy != 0 && typeCandy != -1){
                     listCandy.add(
                         Candy(
                             (tempX + Constant.spaceCandy / 2).toFloat(),
@@ -69,16 +76,9 @@ class Board {
 
     fun draw(canvas: Canvas, paint: Paint){
         val tempColor = paint.color
+        header.draw(canvas,paint)
+        footer.draw(canvas,paint)
         paint.color = Constant.colorBgBoard
-        canvas.drawRect(0f, 0f, Constant.screenW.toFloat(), 150f, paint)
-        canvas.drawRect(
-            (Constant.screenW / 4).toFloat(),
-            (Constant.screenH - Constant.spaceBoardWidth).toFloat(),
-            Constant.screenW.toFloat(),
-            Constant.screenH.toFloat(),
-            paint
-        )
-
         for (i in 0 until col) {
             for (j in 0 until row) {
                 val tempX = x + i * width + Constant.spaceBoard

@@ -21,7 +21,7 @@ class PlayActivity : AppCompatActivity() {
         Constant.screenW = point.x
         Constant.screenH = point.y - getHNavigationBar()
 
-        gameView = GameView(this, point.x.toFloat(), point.y.toFloat())
+        gameView = GameView(this, "level2",point.x.toFloat(), point.y.toFloat())
         setContentView(gameView)
     }
 
@@ -40,5 +40,10 @@ class PlayActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         gameView.resume()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        gameView.destroy()
     }
 }

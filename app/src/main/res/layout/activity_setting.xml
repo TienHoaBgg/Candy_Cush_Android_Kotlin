@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:background="@drawable/bg1"
+        >
+
+          <RelativeLayout
+              android:layout_width="match_parent"
+              android:layout_height="?attr/actionBarSize"
+              android:gravity="center_vertical"
+              android:background="@drawable/bg_actionbar">
+              <ImageButton
+                  android:id="@+id/btn_back"
+                  android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:layout_gravity="start"
+                  android:layout_marginStart="20dp"
+                  android:background="@drawable/ic_back_while" />
+
+              <TextView
+                  android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:text="@string/sSetting"
+                  android:textStyle="bold"
+                  android:textSize="23sp"
+                  android:textColor="@color/white"
+                  android:layout_centerHorizontal="true"
+                  />
+          </RelativeLayout>
+
+       <TableLayout
+           android:layout_width="300dp"
+           android:layout_height="match_parent"
+           android:stretchColumns="0"
+           android:layout_gravity="center"
+           android:layout_marginTop="50dp"
+           >
+           <TableRow>
+               <TextView
+                   android:layout_width="wrap_content"
+                   android:layout_height="wrap_content"
+                   android:text="@string/sMusic"
+                   android:textSize="30sp"
+                   android:textStyle="bold"
+                   android:textColor="@color/white"
+
+                   />
+
+               <ToggleButton
+                   android:id="@+id/btnMusic"
+                   android:layout_width="wrap_content"
+                   android:layout_height="wrap_content"
+                   android:background="@drawable/bg_toggle_button"
+                   android:layout_marginStart="20dp"
+                   android:layout_marginBottom="10dp"
+                   android:checked="false"
+                   android:text=""
+                   android:textOff=""
+                   android:textOn=""
+                   />
+           </TableRow>
+           <TableRow
+               android:layout_marginTop="10dp"
+               android:layout_marginBottom="10dp"
+               >
+               <TextView
+                   android:layout_width="wrap_content"
+                   android:layout_height="wrap_content"
+                   android:text="@string/sSound"
+                   android:textSize="30sp"
+                   android:textStyle="bold"
+                   android:textColor="@color/white"
+                   />
+
+               <ToggleButton
+                   android:id="@+id/btnSound"
+                   android:layout_width="wrap_content"
+                   android:layout_height="wrap_content"
+                   android:background="@drawable/bg_toggle_button"
+                   android:layout_marginStart="20dp"
+                   android:layout_marginBottom="10dp"
+                   android:checked="false"
+                   android:text=""
+                   android:textOff=""
+                   android:textOn=""
+                    android:paddingBottom="5dp"
+                   />
+           </TableRow>
+       </TableLayout>
+    </LinearLayout>
+</layout>

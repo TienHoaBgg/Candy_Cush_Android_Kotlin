@@ -16,12 +16,13 @@ class Constant {
 
         //========================================
 
-        const val spaceBoard = 5
+        const val spaceBoard = 8
         const val spaceCandy = 10
         const val spaceBoardWidth = 200
-        val colorBgBoard = Color.argb(111, 20, 180, 255)
+        const val headerH = 260f
+        const val footerH = 130f
+        val colorBgBoard = Color.argb(125, 20, 180, 255)
 
-        const val score = 10
 
     }
 }

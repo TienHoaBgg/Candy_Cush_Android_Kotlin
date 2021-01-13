@@ -1,11 +1,11 @@
-package com.nth.game.model
+package com.nth.game.bitmap
 
 import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.Rect
 import com.nth.game.Constant
 import com.nth.game.R
+import com.nth.game.model.CandyBit
 import java.util.*
 
 

@@ -1,16 +1,25 @@
 package com.nth.game.view
 
-import android.graphics.Bitmap
-import android.graphics.Color
-import android.graphics.Paint
-import android.graphics.Point
+import android.content.Context
+import android.content.SharedPreferences
+import android.graphics.*
+import android.os.Build
+import android.util.Log
 import android.view.MotionEvent
 import android.view.SurfaceView
-import com.nth.game.model.Background
+import androidx.core.content.res.ResourcesCompat
+import com.nth.game.bitmap.Background
 import com.nth.game.model.Board
-import com.nth.game.model.CandyBitmap
+import com.nth.game.bitmap.CandyBitmap
 import com.nth.game.Constant
+import com.nth.game.manager.MusicManager
+import com.nth.game.R
+import com.nth.game.bitmap.EndGame
+import com.nth.game.manager.DataManager
+import com.nth.game.manager.SoundManager
 import com.nth.game.model.Candy
+import com.nth.game.model.Level
+import kotlin.collections.ArrayList
 
 
 /**
@@ -22,35 +31,84 @@ class GameView : SurfaceView, Runnable {
     private var activity: PlayActivity
 
     private lateinit var thread: Thread
+    private var sleep:Long = 100
     private var isPlaying = false
     private var isGameOver = false
     private var background: Background
     private var paint: Paint
-    private var board: Board
-    private var candyBitmap: CandyBitmap
-    private var listCandy: MutableList<Candy>
-    private var listCol :MutableList<Int>
-    private var score = 0
+    private lateinit var board: Board
+    private lateinit var candyBitmap: CandyBitmap
+    private lateinit var listCandy: MutableList<Candy>
+    private lateinit var listCol: MutableList<Int>
+    private var score:Long = 0
     private var moveCount = 0
     var index = 0
+    private var musicManager: MusicManager
+    private var prefs: SharedPreferences
+    private var soundManager: SoundManager
+    private var endGame:EndGame
+    private var currentLevel:Level
+    private var bgBoard:Bitmap
 
-    constructor(activity: PlayActivity, screenW: Float, screenH: Float) : super(activity) {
+
+
+    constructor(activity: PlayActivity,level:String, screenW: Float, screenH: Float) : super(activity) {
         this.activity = activity
+        prefs = activity.getSharedPreferences("GameCandy", Context.MODE_PRIVATE)
+        currentLevel = Level(level,0,0)
+        init()
+        musicManager = MusicManager()
+        soundManager = SoundManager()
+        musicManager.setData(activity, R.raw.music_bg_monkey)
         background = Background(screenW, screenH, resources)
+        bgBoard = background.getBackgroundRd()
         paint = Paint()
+        endGame = EndGame(resources)
+        val customTypeface = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            resources.getFont(R.font.mergepro)
+        } else {
+            ResourcesCompat.getFont(context, R.font.mergepro)
+        }
+        paint.typeface = customTypeface
+        paint.isAntiAlias = true
+        paint.isDither = true
+        paint.style = Paint.Style.FILL_AND_STROKE
+        paint.strokeJoin = Paint.Join.ROUND
+        paint.strokeCap = Paint.Cap.ROUND
+        paint.strokeWidth = 5F
+        if (!prefs.getBoolean("isMusicOff", false)) musicManager.play()
+    }
+
+    private fun reloadGame(){
+        soundManager.buttonPress()
+        isGameOver = false
+        init()
+    }
+
+    private fun backToHome(){
+        soundManager.buttonPress()
+        activity.finish()
+    }
+
+    private fun init(){
         listCol = arrayListOf()
-        board = Board(activity,"level1", resources)
+        score = 0
+        board = Board(activity, currentLevel.name, resources)
+        board.header.isMusicOff = prefs.getBoolean("isMusicOff", false)
+        board.header.isSoundOff = prefs.getBoolean("isSoundOff", false)
+
         moveCount = board.fileMap.moveLimit
         listCandy = board.listCandy
 
         candyBitmap = CandyBitmap(board.width, resources)
+
         index = (listCandy.size - 1)
         listCol.add(0)
-        for (i in 1..listCandy.size - 2){
-            if (listCandy[0].y == listCandy[i].y){
+        for (i in 1..listCandy.size - 2) {
+            if (listCandy[0].y == listCandy[i].y) {
                 listCol.add(i)
             }
-            if (listCol.size == board.col){
+            if (listCol.size == board.col) {
                 break
             }
         }
@@ -62,62 +120,76 @@ class GameView : SurfaceView, Runnable {
             checkMatch()
             dropDownCandy()
             checkEndGame()
+            update()
             sleep()
         }
     }
 
-    private fun checkEndGame(){
-        if (moveCount <= 0){
+    private fun update() {
+        board.header.score = score
+        board.header.moveLimit = moveCount
+        currentLevel.score = score
+        currentLevel.type = board.header.typeView
+    }
+
+    private fun checkEndGame() {
+        if (moveCount <= 0) {
             var isRun = false
-            for (candy in listCandy){
-                if (candy.isMatch){
+            for (candy in listCandy) {
+                if (candy.isMatch) {
                     isRun = true
                     break
                 }
             }
-            if (!isRun && checkMatch() == 0){
-                isGameOver = true
+            if (!isRun && checkMatch() == 0) {
+                Thread {
+                    Thread.sleep(1000)
+                    isGameOver = true
+                }.start()
             }
         }
     }
 
-    private fun dropDownCandy(){
-        for (j in 0 until listCol.size - 1){
-            for (k in listCol[j] until listCol[j+1] - 1){
-                if (listCandy[listCol[j]].isMatch){
-                    listCandy[listCol[j]].candy = candyBitmap.getCandy()
-                    listCandy[listCol[j]].isMatch = false
-                }
-                if (listCandy[k+1].isMatch){
-                       var temp = listCandy[k].candy
-                       listCandy[k].candy = listCandy[k + 1].candy
+    private fun dropDownCandy() {
+        if (listCol.size != 0) {
+            for (j in 0 until listCol.size - 1) {
+                for (k in listCol[j] until listCol[j + 1] - 1) {
+                    if (listCandy[listCol[j]].isMatch) {
+                        listCandy[listCol[j]].candy = candyBitmap.getCandy()
+                        listCandy[listCol[j]].isMatch = false
+                    }
+                    if (listCandy[k + 1].isMatch) {
+                        var temp = listCandy[k].candy
+                        listCandy[k].candy = listCandy[k + 1].candy
                         listCandy[k].isMatch = true
-                       listCandy[k+1].candy = temp
-                        listCandy[k+1].isMatch = false
+                        listCandy[k + 1].candy = temp
+                        listCandy[k + 1].isMatch = false
+                    }
                 }
             }
-        }
 
-        // hieu ung cho cot cuoi cung
-        for (k in listCol[listCol.size -1] until listCandy.size - 1){
-            if (listCandy[listCol[listCol.size -1]].isMatch){
-                listCandy[listCol[listCol.size -1]].candy = candyBitmap.getCandy()
-                listCandy[listCol[listCol.size -1]].isMatch = false
-            }
-            if (listCandy[k+1].isMatch){
-                var temp = listCandy[k].candy
-                listCandy[k].candy = listCandy[k + 1].candy
-                listCandy[k].isMatch = true
-                listCandy[k+1].candy = temp
-                listCandy[k+1].isMatch = false
+            // hieu ung cho cot cuoi cung
+            for (k in listCol[listCol.size - 1] until listCandy.size - 1) {
+                if (listCandy[listCol[listCol.size - 1]].isMatch) {
+                    listCandy[listCol[listCol.size - 1]].candy = candyBitmap.getCandy()
+                    listCandy[listCol[listCol.size - 1]].isMatch = false
+                }
+                if (listCandy[k + 1].isMatch) {
+                    var temp = listCandy[k].candy
+                    listCandy[k].candy = listCandy[k + 1].candy
+                    listCandy[k].isMatch = true
+                    listCandy[k + 1].candy = temp
+                    listCandy[k + 1].isMatch = false
+                }
             }
         }
     }
 
-    private fun checkMatch() : Int {
+    private fun checkMatch(): Int {
         // check an diem theo hang
         var listRow: ArrayList<Int> = arrayListOf()
         var scoreCount = 0
+
         for (i in listCandy.indices) {
             listRow.add(i)
             // Luu cac phan tu theo hang thanh 1 mang rieng de xac dinh cac phan tu dung canh nhau
@@ -130,12 +202,13 @@ class GameView : SurfaceView, Runnable {
             for (index in 0 until listRow.size - 2) {
                 val typeCandy = listCandy[listRow[index]].candy.type
                 if (typeCandy == listCandy[listRow[index + 1]].candy.type &&
-                        typeCandy == listCandy[listRow[index + 2]].candy.type) {
-                            // Danh dau cac candy cung kieu dung canh nhau
+                        typeCandy == listCandy[listRow[index + 2]].candy.type && !listCandy[listRow[index + 1]].isMatch && !listCandy[listRow[index + 2]].isMatch) {
+                    // Danh dau cac candy cung kieu dung canh nhau
+                    soundManager.match1()
                     for (k in 0..2) {
-                            // Do la dung mang 1 chieu nen can lap lai nhieu lan de xac dinh
-                                // Nen dung if o day de bo qua cac candy da duoc xac dinh o vong lap truoc
-                        if (!listCandy[listRow[index + k]].isMatch){
+                        // Do la dung mang 1 chieu nen can lap lai nhieu lan de xac dinh
+                        // Nen dung if o day de bo qua cac candy da duoc xac dinh o vong lap truoc
+                        if (!listCandy[listRow[index + k]].isMatch) {
                             scoreCount++
                             listCandy[listRow[index + k]].isMatch = true
                         }
@@ -146,15 +219,14 @@ class GameView : SurfaceView, Runnable {
                     var k = 3
                     while (index + k < listRow.size) {
                         if (typeCandy == listCandy[listRow[index + k]].candy.type) {
-                            if (!listCandy[listRow[index + k]].isMatch){
-                                scoreCount++
-                                listCandy[listRow[index + k]].isMatch = true
-                            }
+                            scoreCount++
+                            listCandy[listRow[index + k]].isMatch = true
                         } else {
                             break
                         }
                         k++
                     }
+
                 }
             }
             listRow.clear()
@@ -175,17 +247,17 @@ class GameView : SurfaceView, Runnable {
             for (index in 0 until listCol.size - 2) {
                 val typeCandy = listCandy[listCol[index]].candy.type
                 if (typeCandy == listCandy[listCol[index + 1]].candy.type &&
-                        typeCandy == listCandy[listCol[index + 2]].candy.type) {
+                        typeCandy == listCandy[listCol[index + 2]].candy.type &&
+                        !listCandy[listCol[index + 1]].isMatch && !listCandy[listCol[index + 2]].isMatch) {
+                    soundManager.match1()
                     for (k in 0..2) {
-                        if (!listCandy[listCol[index + k]].isMatch){
-                            scoreCount++
-                            listCandy[listCol[index + k]].isMatch = true
-                        }
+                        listCandy[listCol[index + k]].isMatch = true
+                        scoreCount++
                     }
                     var k = 3
                     while (index + k < listCol.size) {
                         if (typeCandy == listCandy[listCol[index + k]].candy.type) {
-                            if (!listCandy[listCol[index + k]].isMatch){
+                            if (!listCandy[listCol[index + k]].isMatch) {
                                 scoreCount++
                                 listCandy[listCol[index + k]].isMatch = true
                             }
@@ -198,21 +270,25 @@ class GameView : SurfaceView, Runnable {
             }
             listCol.clear()
         }
-        score += Constant.score*scoreCount
-        return Constant.score*scoreCount
+        score += board.fileMap.score * scoreCount
+        return board.fileMap.score * scoreCount
     }
 
     private var candySelectId = 0
-    private fun touchCandy(point: Point) {
+    private fun touchCandy(point: Point): Point? {
+        var pointCandy: Point? = null
         for (i in listCandy.indices) {
             val candy = listCandy[i]
             if (point.x >= candy.x && point.x <= candy.x + candy.width && point.y >= candy.y && point.y <= candy.y + candy.width) {
                 candy.isSelect = !candy.isSelect
                 candySelectId = i
+                pointCandy = Point((candy.x + candy.width / 2).toInt(), (candy.y + candy.width / 2).toInt())
+                if (!prefs.getBoolean("isSoundOff", false)) soundManager.buttonPress()
             } else {
                 candy.isSelect = false
             }
         }
+        return pointCandy
     }
 
     private fun moveCandy(point: Point) {
@@ -224,12 +300,14 @@ class GameView : SurfaceView, Runnable {
                     listCandy[candySelectId].candy = temp
                     // Kiem tra sau khi di chuyen candy co match khong
                     // Neu khong thi di chuyen lai vi tri cu
-                    if (checkMatch() <= 0){
+                    if (checkMatch() <= 0) {
+                        if (!prefs.getBoolean("isSoundOff", false)) soundManager.playMoveCancel()
                         Thread.sleep(220)
                         temp = listCandy[i].candy
                         listCandy[i].candy = listCandy[candySelectId].candy
                         listCandy[candySelectId].candy = temp
-                    }else{
+                    } else {
+                        if (!prefs.getBoolean("isSoundOff", false)) soundManager.playMoveAccept()
                         moveCount--
                     }
                     listCandy[candySelectId].isSelect = false
@@ -238,14 +316,32 @@ class GameView : SurfaceView, Runnable {
         }
     }
 
+    private fun onClickSound() {
+        val editor = prefs.edit()
+        editor.putBoolean("isSoundOff", !prefs.getBoolean("isSoundOff", false))
+        editor.apply()
+        if (!prefs.getBoolean("isSoundOff", false)) soundManager.buttonPress()
+    }
+
+    private fun onClickMusic() {
+        if (!prefs.getBoolean("isSoundOff", false)) soundManager.buttonPress()
+        val editor = prefs.edit()
+        editor.putBoolean("isMusicOff", !prefs.getBoolean("isMusicOff", false))
+        editor.apply()
+        if (prefs.getBoolean("isMusicOff", false)) {
+            musicManager.pause()
+        } else {
+            musicManager.play()
+        }
+    }
+
     private var candyS = false
     private fun draw() {
         if (holder.surface.isValid) {
             val canvas = holder.lockCanvas()
-            canvas.drawBitmap(background.background, background.x, background.y, paint)
+            canvas.drawBitmap(bgBoard, background.x, background.y, paint)
             board.draw(canvas, paint)
             paint.color = Color.BLUE
-
             for (candy in listCandy) {
                 // Ve tat ca cac candy ma chua match
                 if (!candy.isMatch) {
@@ -270,19 +366,17 @@ class GameView : SurfaceView, Runnable {
                 }
             }
 
-            paint.textSize = 100f
-            canvas.drawText("$score",((Constant.screenW * 3 / 5) ).toFloat(),(Constant.screenH - 69).toFloat(),paint )
-            paint.color = Color.RED
-            canvas.drawText("$moveCount",((Constant.screenW  / 2) ).toFloat(),(Constant.screenH - 69).toFloat(),paint )
-
-            if (isGameOver){
-                isPlaying = false
+            if (isGameOver) {
+                sleep = 5
                 paint.textSize = 160f
-                paint.color = Color.WHITE
-                canvas.drawText("Game Over",((Constant.screenW  / 4)).toFloat(),(Constant.screenH/2).toFloat(),paint )
-
+                paint.color = Color.argb(69, 255, 255, 255)
+                canvas.drawRect(0f, 0f, Constant.screenW.toFloat(), Constant.screenH.toFloat() + 120f, paint)
+                endGame.draw(currentLevel,canvas,paint)
+                if (endGame.isDone){
+                    sleep = 100
+                    isPlaying = false
+                }
             }
-
 
             holder.unlockCanvasAndPost(canvas)
         }
@@ -292,27 +386,64 @@ class GameView : SurfaceView, Runnable {
     private var touchTempY = 0f
     private var isTouch = false
     override fun onTouchEvent(event: MotionEvent): Boolean {
-        if (event.x > board.x && event.x < (board.x + board.boardW) && event.y > board.y && event.y < (board.y + board.boardH)) {
+        if (!isGameOver && moveCount > 0) {
+            touchIsPlay(event)
+        } else {
+            when(event.action){
+                MotionEvent.ACTION_DOWN ->{
+                    if (event.x > endGame.btnHome.x &&event.x < endGame.btnHome.x+endGame.btnHome.width &&
+                            event.y > endGame.btnHome.y && event.y < endGame.btnHome.y + endGame.btnHome.width){
+                        backToHome()
+                    }
+                    if (event.x > endGame.btnReload.x &&event.x < endGame.btnReload.x + endGame.btnReload.width &&
+                            event.y > endGame.btnReload.y && event.y < endGame.btnReload.y + endGame.btnReload.width){
+                                endGame.tempY = 0f
+                                endGame.isDone = false
+                        reloadGame()
+                        resume()
+                    }
 
+                    if (event.x > endGame.btnNext.x &&event.x < endGame.btnNext.x+endGame.btnNext.width &&
+                            event.y > endGame.btnNext.y && event.y < endGame.btnNext.y + endGame.btnNext.width){
+
+
+                    }
+
+                    if (event.x > endGame.btnClose.x &&event.x < endGame.btnClose.x+endGame.btnClose.width &&
+                            event.y > endGame.btnClose.y && event.y < endGame.btnClose.y + endGame.btnClose.width){
+
+                    }
+                }
+            }
+        }
+        return true
+    }
+
+    private fun touchIsPlay(event: MotionEvent) {
+        if (event.x > board.x && event.x < (board.x + board.boardW) && event.y > board.y && event.y < (board.y + board.boardH)) {
             when (event.action) {
                 MotionEvent.ACTION_MOVE -> {
                     if (isTouch) {
                         // Candy sang phai
-                        if (event.x > touchTempX + listCandy[0].width && event.y > touchTempY - listCandy[0].width / 2 && event.y < touchTempY + listCandy[0].width / 2) {
+                        if (event.x > touchTempX + listCandy[0].width && event.y > touchTempY - listCandy[0].width / 2
+                                && event.y < touchTempY + listCandy[0].width / 2) {
                             isTouch = false
                             moveCandy(Point(event.x.toInt(), event.y.toInt()))
 
                         }// Candy sang trai
-                        else if (event.x < touchTempX - listCandy[0].width && event.y > touchTempY - listCandy[0].width / 2 && event.y < touchTempY + listCandy[0].width / 2) {
+                        else if (event.x < touchTempX - listCandy[0].width && event.y > touchTempY - listCandy[0].width / 2
+                                && event.y < touchTempY + listCandy[0].width / 2) {
                             isTouch = false
                             moveCandy(Point(event.x.toInt(), event.y.toInt()))
                         }
                         // Candy di xuong
-                        else if (event.y > touchTempY + listCandy[0].width && event.x > touchTempX - listCandy[0].width / 2 && event.x < touchTempX + listCandy[0].width / 2) {
+                        else if (event.y > touchTempY + listCandy[0].width && event.x > touchTempX - listCandy[0].width / 2
+                                && event.x < touchTempX + listCandy[0].width / 2) {
                             isTouch = false
                             moveCandy(Point(event.x.toInt(), event.y.toInt()))
                         } // Candy di len
-                        else if (event.y < touchTempY - listCandy[0].width && event.x > touchTempX - listCandy[0].width / 2 && event.x < touchTempX + listCandy[0].width / 2) {
+                        else if (event.y < touchTempY - listCandy[0].width && event.x > touchTempX - listCandy[0].width / 2
+                                && event.x < touchTempX + listCandy[0].width / 2) {
                             isTouch = false
                             moveCandy(Point(event.x.toInt(), event.y.toInt()))
                         }
@@ -320,18 +451,46 @@ class GameView : SurfaceView, Runnable {
                 }
                 MotionEvent.ACTION_DOWN -> {
                     isTouch = true
-                    touchTempX = event.x
-                    touchTempY = event.y
-                    touchCandy(Point(event.x.toInt(), event.y.toInt()))
+                    val pointCandySelect = touchCandy(Point(event.x.toInt(), event.y.toInt()))
+                    if (pointCandySelect != null) {
+                        touchTempX = pointCandySelect.x.toFloat()
+                        touchTempY = pointCandySelect.y.toFloat()
+                    }
                 }
             }
         }
-        return true
+        // Cham phia ngoai man choi
+        else {
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    if (event.x >= board.header.soundOn.x && event.x < board.header.soundOn.x + board.header.soundOn.width
+                            && event.y > 6 && event.y < board.header.soundOn.y + board.header.soundOn.width) {
+                        board.header.isSoundOff = !board.header.isSoundOff
+                        onClickSound()
+                    }
+                    if (event.x >= board.header.musicOn.x && event.x < board.header.musicOn.x + board.header.musicOn.width
+                            && event.y > 6 && event.y < board.header.musicOn.y + board.header.musicOn.width) {
+                        board.header.isMusicOff = !board.header.isMusicOff
+                        onClickMusic()
+                    }
+
+                    if (event.x >= board.footer.btnHome.x && event.x < board.footer.btnHome.x + board.footer.btnHome.width
+                            && event.y > board.footer.btnHome.y && event.y < board.footer.btnHome.y + board.footer.btnHome.width){
+                        backToHome()
+                    }
+                    if (event.x >= board.footer.btnReload.x && event.x < board.footer.btnReload.x + board.footer.btnReload.width
+                            && event.y > board.footer.btnReload.y && event.y < board.footer.btnReload.y + board.footer.btnReload.width){
+                        reloadGame()
+                    }
+
+                }
+            }
+        }
     }
 
     private fun sleep() {
         try {
-            Thread.sleep(122)
+            Thread.sleep(sleep)
         } catch (e: InterruptedException) {
             e.printStackTrace()
         }
@@ -347,9 +506,17 @@ class GameView : SurfaceView, Runnable {
         try {
             isPlaying = false
             thread.join()
+            if (musicManager.isPlay()){
+                musicManager.stop()
+            }
         } catch (e: InterruptedException) {
             e.printStackTrace()
         }
+    }
+
+    fun destroy(){
+        musicManager.release()
+        soundManager.release()
     }
 
 }

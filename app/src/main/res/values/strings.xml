@@ -1,4 +1,12 @@
 <resources>
     <string name="app_name">Candy Crush</string>
-    <string name="play">Chơi</string>
+    <string name="sPlay">Play</string>
+    <string name="sContinue">Continue</string>
+    <string name="sHighScore">High Score</string>
+    <string name="sHelp">Help</string>
+    <string name="sSetting">Setting</string>
+    <string name="sExit">Exit</string>
+    <string name="sMusic">Music</string>
+    <string name="sSound">Sound</string>
+    <string name="sSelectLevel">Select Level</string>
 </resources>
