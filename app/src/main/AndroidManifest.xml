@@ -27,9 +27,12 @@
         <activity android:name=".view.SettingActivity"
             android:screenOrientation="portrait"
             />
-        <activity android:name=".view.HighScoreActivity"
+        <activity android:name=".view.highscore.HighScoreActivity"
             android:screenOrientation="portrait"
            />
+        <activity android:name=".view.selectlevel.SelectLevelActivity"
+            android:screenOrientation="portrait"
+            />
     </application>
 
 </manifest>

@@ -45,6 +45,7 @@ class EndGame {
         endGame3 = BitmapFactory.decodeResource(res, R.drawable.end_game3)
 
         width = (Constant.screenW/5)*4
+
         height = Constant.screenW*5/6
 
         tempY = (-height).toFloat()
@@ -87,7 +88,7 @@ class EndGame {
     fun draw(level: Level,canvas:Canvas,paint: Paint){
         paint.color = Color.WHITE
         var bitmap:Bitmap? = null
-        when(level.type){
+        when(level.typeView){
             0-> bitmap = endGame0
             1-> bitmap = endGame1
             2-> bitmap = endGame2
@@ -104,7 +105,7 @@ class EndGame {
         }else{
             if (tempY < y){
                 canvas.drawBitmap(bitmap!!,x,tempY,paint)
-                tempY += 50
+                tempY += 100
             }else{
                 paint.textSize = 60f
                 canvas.drawBitmap(bitmap!!,x,y,paint)

@@ -1,25 +1,25 @@
 package com.nth.game.view
 
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
 import android.graphics.*
 import android.os.Build
-import android.util.Log
 import android.view.MotionEvent
 import android.view.SurfaceView
+import android.widget.Toast
 import androidx.core.content.res.ResourcesCompat
-import com.nth.game.bitmap.Background
-import com.nth.game.model.Board
-import com.nth.game.bitmap.CandyBitmap
 import com.nth.game.Constant
-import com.nth.game.manager.MusicManager
 import com.nth.game.R
+import com.nth.game.bitmap.Background
+import com.nth.game.bitmap.CandyBitmap
 import com.nth.game.bitmap.EndGame
 import com.nth.game.manager.DataManager
+import com.nth.game.manager.MusicManager
 import com.nth.game.manager.SoundManager
+import com.nth.game.model.Board
 import com.nth.game.model.Candy
 import com.nth.game.model.Level
-import kotlin.collections.ArrayList
 
 
 /**
@@ -31,7 +31,7 @@ class GameView : SurfaceView, Runnable {
     private var activity: PlayActivity
 
     private lateinit var thread: Thread
-    private var sleep:Long = 100
+    private var sleep: Long = 100
     private var isPlaying = false
     private var isGameOver = false
     private var background: Background
@@ -40,38 +40,38 @@ class GameView : SurfaceView, Runnable {
     private lateinit var candyBitmap: CandyBitmap
     private lateinit var listCandy: MutableList<Candy>
     private lateinit var listCol: MutableList<Int>
-    private var score:Long = 0
+    private var score: Long = 0
     private var moveCount = 0
     var index = 0
     private var musicManager: MusicManager
     private var prefs: SharedPreferences
     private var soundManager: SoundManager
-    private var endGame:EndGame
-    private var currentLevel:Level
-    private var bgBoard:Bitmap
+    private var endGame: EndGame
+    private var currentLevel: Level
+    private var bgBoard: Bitmap? = null
 
-
-
-    constructor(activity: PlayActivity,level:String, screenW: Float, screenH: Float) : super(activity) {
+    constructor(activity: PlayActivity, level: Level, screenW: Float, screenH: Float) : super(activity) {
         this.activity = activity
         prefs = activity.getSharedPreferences("GameCandy", Context.MODE_PRIVATE)
-        currentLevel = Level(level,0,0)
-        init()
+        currentLevel = level
+
         musicManager = MusicManager()
         soundManager = SoundManager()
+
         musicManager.setData(activity, R.raw.music_bg_monkey)
+
         background = Background(screenW, screenH, resources)
-        bgBoard = background.getBackgroundRd()
+        init()
+
         paint = Paint()
         endGame = EndGame(resources)
+
         val customTypeface = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             resources.getFont(R.font.mergepro)
         } else {
             ResourcesCompat.getFont(context, R.font.mergepro)
         }
         paint.typeface = customTypeface
-        paint.isAntiAlias = true
-        paint.isDither = true
         paint.style = Paint.Style.FILL_AND_STROKE
         paint.strokeJoin = Paint.Join.ROUND
         paint.strokeCap = Paint.Cap.ROUND
@@ -79,24 +79,40 @@ class GameView : SurfaceView, Runnable {
         if (!prefs.getBoolean("isMusicOff", false)) musicManager.play()
     }
 
-    private fun reloadGame(){
+    private fun reloadGame() {
         soundManager.buttonPress()
         isGameOver = false
         init()
     }
 
-    private fun backToHome(){
+    private fun backToHome() {
         soundManager.buttonPress()
-        activity.finish()
+        val intent = Intent(activity, MainActivity::class.java)
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
+        activity.startActivity(intent)
     }
 
-    private fun init(){
+    private fun nextLevel(){
+        val newLevel = DataManager.getInstances().getCurrentLevelId() + 1
+        if (newLevel >= Constant.listLevel.size){
+            Toast.makeText(activity, "Chúc mừng bạn đã chơi đến level cuối cùng.", Toast.LENGTH_SHORT).show()
+        }else{
+            currentLevel = Constant.listLevel[newLevel]
+            endGame.tempY = 0f
+            endGame.isDone = false
+            DataManager.getInstances().saveCurrentLevel(newLevel)
+            reloadGame()
+            resume()
+        }
+    }
+
+    private fun init() {
         listCol = arrayListOf()
         score = 0
-        board = Board(activity, currentLevel.name, resources)
+        board = Board(activity, currentLevel.fileName, resources)
         board.header.isMusicOff = prefs.getBoolean("isMusicOff", false)
         board.header.isSoundOff = prefs.getBoolean("isSoundOff", false)
-
+        bgBoard = background.getBackgroundRd()
         moveCount = board.fileMap.moveLimit
         listCandy = board.listCandy
 
@@ -128,8 +144,9 @@ class GameView : SurfaceView, Runnable {
     private fun update() {
         board.header.score = score
         board.header.moveLimit = moveCount
+        board.header.levelName = currentLevel.name
         currentLevel.score = score
-        currentLevel.type = board.header.typeView
+        currentLevel.typeView = board.header.typeView
     }
 
     private fun checkEndGame() {
@@ -143,6 +160,7 @@ class GameView : SurfaceView, Runnable {
             }
             if (!isRun && checkMatch() == 0) {
                 Thread {
+                    DataManager.getInstances().saveHighScore(currentLevel)
                     Thread.sleep(1000)
                     isGameOver = true
                 }.start()
@@ -339,7 +357,7 @@ class GameView : SurfaceView, Runnable {
     private fun draw() {
         if (holder.surface.isValid) {
             val canvas = holder.lockCanvas()
-            canvas.drawBitmap(bgBoard, background.x, background.y, paint)
+            canvas.drawBitmap(bgBoard!!, background.x, background.y, paint)
             board.draw(canvas, paint)
             paint.color = Color.BLUE
             for (candy in listCandy) {
@@ -371,8 +389,8 @@ class GameView : SurfaceView, Runnable {
                 paint.textSize = 160f
                 paint.color = Color.argb(69, 255, 255, 255)
                 canvas.drawRect(0f, 0f, Constant.screenW.toFloat(), Constant.screenH.toFloat() + 120f, paint)
-                endGame.draw(currentLevel,canvas,paint)
-                if (endGame.isDone){
+                endGame.draw(currentLevel, canvas, paint)
+                if (endGame.isDone) {
                     sleep = 100
                     isPlaying = false
                 }
@@ -389,29 +407,28 @@ class GameView : SurfaceView, Runnable {
         if (!isGameOver && moveCount > 0) {
             touchIsPlay(event)
         } else {
-            when(event.action){
-                MotionEvent.ACTION_DOWN ->{
-                    if (event.x > endGame.btnHome.x &&event.x < endGame.btnHome.x+endGame.btnHome.width &&
-                            event.y > endGame.btnHome.y && event.y < endGame.btnHome.y + endGame.btnHome.width){
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    if (event.x > endGame.btnHome.x && event.x < endGame.btnHome.x + endGame.btnHome.width &&
+                            event.y > endGame.btnHome.y && event.y < endGame.btnHome.y + endGame.btnHome.width) {
                         backToHome()
                     }
-                    if (event.x > endGame.btnReload.x &&event.x < endGame.btnReload.x + endGame.btnReload.width &&
-                            event.y > endGame.btnReload.y && event.y < endGame.btnReload.y + endGame.btnReload.width){
-                                endGame.tempY = 0f
-                                endGame.isDone = false
+                    if (event.x > endGame.btnReload.x && event.x < endGame.btnReload.x + endGame.btnReload.width &&
+                            event.y > endGame.btnReload.y && event.y < endGame.btnReload.y + endGame.btnReload.width) {
+                        endGame.tempY = 0f
+                        endGame.isDone = false
                         reloadGame()
                         resume()
                     }
 
-                    if (event.x > endGame.btnNext.x &&event.x < endGame.btnNext.x+endGame.btnNext.width &&
-                            event.y > endGame.btnNext.y && event.y < endGame.btnNext.y + endGame.btnNext.width){
-
-
+                    if (event.x > endGame.btnNext.x && event.x < endGame.btnNext.x + endGame.btnNext.width &&
+                            event.y > endGame.btnNext.y && event.y < endGame.btnNext.y + endGame.btnNext.width) {
+                        nextLevel()
                     }
 
-                    if (event.x > endGame.btnClose.x &&event.x < endGame.btnClose.x+endGame.btnClose.width &&
-                            event.y > endGame.btnClose.y && event.y < endGame.btnClose.y + endGame.btnClose.width){
-
+                    if (event.x > endGame.btnClose.x && event.x < endGame.btnClose.x + endGame.btnClose.width &&
+                            event.y > endGame.btnClose.y && event.y < endGame.btnClose.y + endGame.btnClose.width) {
+                        activity.finish()
                     }
                 }
             }
@@ -475,11 +492,11 @@ class GameView : SurfaceView, Runnable {
                     }
 
                     if (event.x >= board.footer.btnHome.x && event.x < board.footer.btnHome.x + board.footer.btnHome.width
-                            && event.y > board.footer.btnHome.y && event.y < board.footer.btnHome.y + board.footer.btnHome.width){
+                            && event.y > board.footer.btnHome.y && event.y < board.footer.btnHome.y + board.footer.btnHome.width) {
                         backToHome()
                     }
                     if (event.x >= board.footer.btnReload.x && event.x < board.footer.btnReload.x + board.footer.btnReload.width
-                            && event.y > board.footer.btnReload.y && event.y < board.footer.btnReload.y + board.footer.btnReload.width){
+                            && event.y > board.footer.btnReload.y && event.y < board.footer.btnReload.y + board.footer.btnReload.width) {
                         reloadGame()
                     }
 
@@ -506,7 +523,7 @@ class GameView : SurfaceView, Runnable {
         try {
             isPlaying = false
             thread.join()
-            if (musicManager.isPlay()){
+            if (musicManager.isPlay()) {
                 musicManager.stop()
             }
         } catch (e: InterruptedException) {
@@ -514,7 +531,7 @@ class GameView : SurfaceView, Runnable {
         }
     }
 
-    fun destroy(){
+    fun destroy() {
         musicManager.release()
         soundManager.release()
     }

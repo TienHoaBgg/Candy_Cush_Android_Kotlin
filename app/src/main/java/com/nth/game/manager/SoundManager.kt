@@ -24,8 +24,6 @@ class SoundManager {
     private var sound1 = 0
     private var sound2 = 0
     private var sound3 = 0
-    private var sound4 = 0
-    private var sound5 = 0
     private var soundMoveAccept = 0
     private var soundMoveCancel = 0
     private var buttonPress = 0
@@ -51,6 +49,8 @@ class SoundManager {
             checkMatch = soundPool.load(context, R.raw.checkmark, 2)
             buttonPress = soundPool.load(context, R.raw.button_press, 1)
             sound1 = soundPool.load(context, R.raw.multi_3, 1)
+            sound2 = soundPool.load(context, R.raw.multi_5, 1)
+            sound3 = soundPool.load(context, R.raw.multi_6, 1)
         }catch (e:Resources.NotFoundException){
         }
     }
@@ -73,6 +73,14 @@ class SoundManager {
 
     fun star1(){
         if (!dataManager.getStateSound())soundPool.play(sound1,1f,1f,2,0,1f)
+    }
+
+    fun star2(){
+        if (!dataManager.getStateSound())soundPool.play(sound2,1f,1f,2,0,1f)
+    }
+
+    fun star3(){
+        if (!dataManager.getStateSound())soundPool.play(sound3,1f,1f,2,0,1f)
     }
 
     fun release() {

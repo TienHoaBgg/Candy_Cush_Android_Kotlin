@@ -4,6 +4,7 @@ import android.content.res.Resources
 import android.graphics.*
 import com.nth.game.Constant
 import com.nth.game.R
+import com.nth.game.manager.SoundManager
 import com.nth.game.model.MBitmap
 
 /**
@@ -23,12 +24,14 @@ class Header {
     private var musicOff:Bitmap
     private var scoreTarget:IntArray
     private var scoreRate = 0f
+    private var typeTemp = 0
 
     var score:Long
     var moveLimit:Int
     var isSoundOff = false
     var isMusicOff = false
     var typeView = 0
+    var levelName:String = ""
 
     constructor(scoreTarget:IntArray, res:Resources){
         this.scoreTarget = scoreTarget
@@ -81,14 +84,26 @@ class Header {
             }
             in 49f..74f -> {
                 typeView = 1
+                if (typeTemp != typeView){
+                    typeTemp = 1
+                    SoundManager.getInstance().star1()
+                }
                 canvas.drawBitmap(background2, 0f, 0f,paint)
             }
             in 75f..98f -> {
                 typeView = 2
+                if (typeTemp != typeView){
+                    typeTemp = 2
+                    SoundManager.getInstance().star1()
+                }
                 canvas.drawBitmap(background3, 0f, 0f,paint)
             }
             else -> {
                 typeView = 3
+                if (typeTemp != typeView){
+                    typeTemp = 3
+                    SoundManager.getInstance().star1()
+                }
                 canvas.drawBitmap(background4, 0f, 0f,paint)
             }
         }
@@ -103,6 +118,9 @@ class Header {
         }else{
             canvas.drawBitmap(musicOff,musicOn.x,musicOn.y,paint)
         }
+        paint.textSize = 50f
+        paint.color = Color.WHITE
+        canvas.drawText(levelName,(Constant.screenW /2 - 89).toFloat(),Constant.headerH/ 3,paint)
 
         paint.textSize = 90f
         paint.color = Color.argb(255,30,144,255)

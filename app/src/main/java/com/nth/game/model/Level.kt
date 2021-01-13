@@ -1,3 +1,3 @@
 package com.nth.game.model
 
-data class Level(var name:String,var score:Long,var type:Int)
+data class Level(var id :Int,var name:String,var fileName:String ,var score:Long,var typeView:Int)

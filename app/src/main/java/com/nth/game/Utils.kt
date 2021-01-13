@@ -1,6 +1,9 @@
 package com.nth.game
 
 import android.content.Context
+import android.view.View
+import android.widget.TextView
+import androidx.databinding.BindingAdapter
 import com.google.gson.Gson
 import com.nth.game.model.FileMap
 import java.io.IOException
@@ -25,6 +28,12 @@ class Utils {
             }catch (e: IOException){
             }
             return null
+        }
+
+        @JvmStatic
+        @BindingAdapter("updateText")
+        fun updateText(tv: TextView, value: Any?) {
+            tv.text = "$value"
         }
     }
 

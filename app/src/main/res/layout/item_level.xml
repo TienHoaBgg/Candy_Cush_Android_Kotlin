@@ -2,6 +2,12 @@
 <layout  xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     >
+    <data>
+        <import type="android.view.View"/>
+        <variable
+            name="item"
+            type="com.nth.game.model.Level" />
+    </data>
 
     <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
@@ -9,45 +15,51 @@
         app:cardBackgroundColor="#ccebff"
         app:cardCornerRadius="16dp"
         android:layout_margin="5dp"
+
         >
         <LinearLayout
+            android:id="@+id/onClickItem"
             android:layout_width="match_parent"
             android:layout_height="69dp"
             android:orientation="horizontal"
             android:weightSum="2"
+            android:gravity="center_vertical"
             >
             <TextView
+                updateText="@{item.name}"
                 android:layout_width="0dp"
-                android:layout_height="match_parent"
+                android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="@string/sSetting"
                 android:textColor="#673AB7"
                 android:textSize="32sp"
                 android:textAlignment="center"
                 android:textStyle="bold"
                 android:layout_marginEnd="3dp"
-                android:visibility="gone"
+                android:visibility="@{item.typeView > 0 ? View.VISIBLE : View.GONE}"
                 />
+
             <TextView
+                updateText="@{item.score}"
                 android:layout_width="0dp"
-                android:layout_height="match_parent"
+                android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="@string/sExit"
                 android:textColor="#673AB7"
                 android:textSize="32sp"
                 android:textAlignment="center"
                 android:textStyle="bold"
                 android:layout_marginStart="3dp"
-                android:visibility="gone"
+                android:visibility="@{item.typeView > 0 ? View.VISIBLE : View.GONE}"
                 />
             <TextView
+                updateText="@{item.name}"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_height="wrap_content"
                 android:text="@string/sExit"
                 android:textColor="#673AB7"
                 android:textSize="32sp"
                 android:textAlignment="center"
                 android:textStyle="bold"
+                android:visibility="@{item.typeView == 0 ? View.VISIBLE : View.GONE}"
                 />
         </LinearLayout>
     </androidx.cardview.widget.CardView>
